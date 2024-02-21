@@ -1,0 +1,26 @@
+[package]
+name = "linjector-rs"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "linjector_rs"
+path = "src/lib.rs"
+
+[[bin]]
+name = "linjector-cmd"
+path = "bin/cmd.rs"
+
+[dependencies]
+android_logger = "0.13.3"
+backtrace = "0.3.69"
+clap = { version = "4.4.7", features = ["derive"] }
+dynasm = "2.0.0"
+dynasmrt = "2.0.0"
+goblin = "0.7.1"
+hxdmp = "0.2.1"
+jni = { version = "0.21.1", default-features = false }
+log = "0.4.20"
+nix = { version = "0.27.1", features = ["uio"] }
+pretty-hex = "0.4.0"
+proc-maps = "0.3.2"
