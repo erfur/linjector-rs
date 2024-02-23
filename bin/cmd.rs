@@ -20,5 +20,14 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    linjector_rs::inject_code_to_pid(args.pid, args.lib_path);
+    linjector_rs::Injector::new(args.pid)
+        .unwrap()
+        .set_file_path(args.lib_path)
+        .unwrap()
+        .set_default_syms()
+        .unwrap()
+        .use_raw_dlopen()
+        .unwrap()
+        .inject()
+        .unwrap();
 }

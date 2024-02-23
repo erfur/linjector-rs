@@ -171,7 +171,7 @@ pub fn raw_dlopen_shellcode(
     }
 }
 
-pub fn _memfd_dlopen_shellcode(
+pub fn memfd_dlopen_shellcode(
     dlopen_addr: usize,
     jmp_addr: usize,
     library_data_bytes: &Vec<u8>,
@@ -273,7 +273,7 @@ pub fn _memfd_dlopen_shellcode(
     }
 }
 
-fn _raw_shellcode() -> Result<Vec<u8>, InjectionError> {
+pub fn raw_shellcode() -> Result<Vec<u8>, InjectionError> {
     unimplemented!()
 }
 
