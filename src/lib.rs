@@ -22,16 +22,16 @@ pub enum InjectionError {
 }
 
 pub struct Injector {
-    pub pid: i32,
+    pid: i32,
     remote_proc: remote_proc::RemoteProc,
-    pub file_path: String,
-    modules: HashMap<String, remote_module::RemoteModule>,
-    pub syms: HashMap<String, usize>,
+    file_path: String,
+    injection_type: InjectionType,
     target_func_sym_name: String,
     target_func_sym_addr: usize,
     target_var_sym_name: String,
     target_var_sym_addr: usize,
-    injection_type: InjectionType,
+    module_cache: HashMap<String, remote_module::RemoteModule>,
+    sym_cache: HashMap<String, usize>,
 }
 
 enum InjectionType {
@@ -46,13 +46,13 @@ impl Injector {
             pid,
             remote_proc: remote_proc::RemoteProc::new(pid)?,
             file_path: String::new(),
-            modules: HashMap::new(),
-            syms: HashMap::new(),
+            injection_type: InjectionType::RawDlopen,
             target_func_sym_name: String::new(),
             target_func_sym_addr: 0,
             target_var_sym_name: String::new(),
             target_var_sym_addr: 0,
-            injection_type: InjectionType::RawDlopen,
+            module_cache: HashMap::new(),
+            sym_cache: HashMap::new(),
         })
     }
 
@@ -78,25 +78,25 @@ impl Injector {
     fn add_sym(&mut self, module_name: &str, sym_name: &str) -> Result<usize, InjectionError> {
         debug!("add_sym: {}!{}", module_name, sym_name);
 
-        if !self.modules.contains_key(module_name) {
-            let module = self.remote_proc.get_module(module_name)?;
-            self.modules.insert(module_name.to_string(), module);
+        if !self.module_cache.contains_key(module_name) {
+            let module = self.remote_proc.module(module_name)?;
+            self.module_cache.insert(module_name.to_string(), module);
         }
 
-        let module = self.modules.get(module_name).unwrap();
+        let module = self.module_cache.get(module_name).unwrap();
         debug!("add_sym: {} 0x{:x}", module_name, module.vm_addr);
 
-        if !self.syms.contains_key(sym_name) {
+        if !self.sym_cache.contains_key(sym_name) {
             let sym = module.dlsym_from_fs(sym_name)?;
-            self.syms.insert(sym_name.to_string(), sym);
+            self.sym_cache.insert(sym_name.to_string(), sym);
         }
 
         debug!(
             "add_sym: {} 0x{:x}",
             sym_name,
-            self.syms.get(sym_name).unwrap()
+            self.sym_cache.get(sym_name).unwrap()
         );
-        Ok(*self.syms.get(sym_name).unwrap())
+        Ok(*self.sym_cache.get(sym_name).unwrap())
     }
 
     pub fn set_func_sym(
@@ -178,18 +178,18 @@ impl Injector {
         match self.injection_type {
             InjectionType::RawDlopen => {
                 second_stage = shellcode::raw_dlopen_shellcode(
-                    *self.syms.get("dlopen").unwrap(),
+                    *self.sym_cache.get("dlopen").unwrap(),
                     file_path,
-                    *self.syms.get("malloc").unwrap(),
+                    *self.sym_cache.get("malloc").unwrap(),
                 )
                 .unwrap();
             }
             InjectionType::MemFdDlopen => {
                 second_stage = shellcode::memfd_dlopen_shellcode(
-                    *self.syms.get("dlopen").unwrap(),
-                    *self.syms.get("malloc").unwrap(),
+                    *self.sym_cache.get("dlopen").unwrap(),
+                    *self.sym_cache.get("malloc").unwrap(),
                     &std::fs::read(file_path.as_str()).unwrap(),
-                    *self.syms.get("sprintf").unwrap(),
+                    *self.sym_cache.get("sprintf").unwrap(),
                 )
                 .unwrap();
             }
@@ -204,23 +204,23 @@ impl Injector {
 
         info!("read original bytes");
         let func_original_bytes = proc
-            .rm
-            .read_mem(self.target_func_sym_addr, first_stage.len())
+            .mem
+            .read(self.target_func_sym_addr, first_stage.len())
             .unwrap();
-        let var_original_bytes = proc.rm.read_mem(self.target_var_sym_addr, 0x8).unwrap();
+        let var_original_bytes = proc.mem.read(self.target_var_sym_addr, 0x8).unwrap();
 
         info!("write first stage shellcode");
-        proc.rm
-            .write_mem(self.target_var_sym_addr, &vec![0x0; 0x8])
+        proc.mem
+            .write(self.target_var_sym_addr, &vec![0x0; 0x8])
             .unwrap();
-        proc.rm
-            .write_mem(self.target_func_sym_addr, &first_stage)
+        proc.mem
+            .write(self.target_func_sym_addr, &first_stage)
             .unwrap();
 
         info!("wait for shellcode to trigger");
         let mut new_map: u64;
         loop {
-            let data = proc.rm.read_mem(self.target_var_sym_addr, 0x8).unwrap();
+            let data = proc.mem.read(self.target_var_sym_addr, 0x8).unwrap();
             // u64 from val
             new_map = u64::from_le_bytes(data[0..8].try_into().unwrap());
             if (new_map & 0x1 != 0) && (new_map & 0xffff_ffff_ffff_fff0 != 0) {
@@ -232,23 +232,23 @@ impl Injector {
         info!("new map: 0x{:x}", new_map);
 
         info!("overwrite malloc with loop");
-        proc.rm
-            .write_mem(self.target_func_sym_addr, &shellcode::self_jmp().unwrap())
+        proc.mem
+            .write(self.target_func_sym_addr, &shellcode::self_jmp().unwrap())
             .unwrap();
 
         // wait for 100ms
         std::thread::sleep(std::time::Duration::from_millis(100));
 
         info!("restore original bytes");
-        proc.rm
+        proc.mem
             .write_code(self.target_func_sym_addr, &func_original_bytes, 1)
             .unwrap();
-        proc.rm
-            .write_mem(self.target_var_sym_addr, &var_original_bytes)
+        proc.mem
+            .write(self.target_var_sym_addr, &var_original_bytes)
             .unwrap();
 
         info!("overwrite new map");
-        proc.rm
+        proc.mem
             .write_code(new_map as usize, &second_stage, 1)
             .unwrap();
 
