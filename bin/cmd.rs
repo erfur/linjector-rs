@@ -1,8 +1,8 @@
 use clap::Parser;
 
-/// Simple program to greet a person
+/// Inject code into a running process using /proc/mem
 #[derive(Parser, Debug)]
-#[command(version, about = "Inject code into a running process using /proc/mem")]
+#[command(version, about)]
 struct Args {
     /// pid of the target process
     #[arg(short, long)]
