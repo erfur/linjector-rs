@@ -136,25 +136,15 @@ impl Injector {
         Ok(self)
     }
 
-    fn set_dlopen_syms(&mut self) -> Result<&mut Self, InjectionError> {
-        self.set_func_sym("libdl.so", "dlopen")?;
-        Ok(self)
-    }
-
-    fn set_sprintf_syms(&mut self) -> Result<&mut Self, InjectionError> {
-        self.set_func_sym("libc.so", "sprintf")?;
-        Ok(self)
-    }
-
     pub fn use_raw_dlopen(&mut self) -> Result<&mut Self, InjectionError> {
-        self.set_dlopen_syms()?;
+        self.set_func_sym("libdl.so", "dlopen")?;
         self.injection_type = InjectionType::RawDlopen;
         Ok(self)
     }
 
     pub fn use_memfd_dlopen(&mut self) -> Result<&mut Self, InjectionError> {
-        self.set_dlopen_syms()?;
-        self.set_sprintf_syms()?;
+        self.set_func_sym("libdl.so", "dlopen")?;
+        self.set_func_sym("libc.so", "sprintf")?;
         self.injection_type = InjectionType::MemFdDlopen;
         Ok(self)
     }
