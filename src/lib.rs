@@ -3,7 +3,7 @@ mod remote_mem;
 mod remote_module;
 mod remote_proc;
 mod shellcode;
-pub mod utils;
+mod utils;
 
 #[macro_use]
 extern crate log;
