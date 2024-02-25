@@ -37,7 +37,7 @@ pub fn print_file_hexdump(file_path: &str) -> Result<(), InjectionError> {
     Ok(())
 }
 
-pub fn move_file_to_tmp(file_path: &str) -> Result<String, InjectionError> {
+pub fn copy_file_to_tmp(file_path: &str) -> Result<String, InjectionError> {
     let file_name = match std::path::Path::new(file_path).file_name() {
         Some(name) => name.to_str().unwrap(),
         None => {
@@ -46,7 +46,7 @@ pub fn move_file_to_tmp(file_path: &str) -> Result<String, InjectionError> {
         }
     };
 
-    // move file to /data/local/tmp so that the target app can access it
+    // copy file to /data/local/tmp so that the target app can access it
     let tmp_file_path = std::path::Path::new(TMP_DIR_PATH)
         .join(file_name)
         .as_os_str()
@@ -54,14 +54,14 @@ pub fn move_file_to_tmp(file_path: &str) -> Result<String, InjectionError> {
         .unwrap()
         .to_string();
 
-    info!("Moving file {} to {}", file_path, tmp_file_path);
+    info!("Copying file {} to {}", file_path, tmp_file_path);
     match std::fs::copy(file_path, &tmp_file_path) {
         Ok(_) => {
-            info!("File moved successfully");
+            info!("File copied successfully");
             Ok(tmp_file_path)
         }
         Err(e) => {
-            error!("Error moving file: {}", e);
+            error!("Error copying file: {}", e);
             Err(InjectionError::FileError)
         }
     }

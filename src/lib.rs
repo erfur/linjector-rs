@@ -68,11 +68,11 @@ impl Injector {
     }
 
     fn prepare_file(&self) -> Result<String, InjectionError> {
-        let file_path = utils::move_file_to_tmp(self.file_path.as_str())?;
-        utils::fix_file_context(file_path.as_str())?;
-        utils::fix_file_permissions(file_path.as_str())?;
-        utils::print_file_hexdump(file_path.as_str())?;
-        Ok(file_path)
+        let tmp_file_path = utils::copy_file_to_tmp(self.file_path.as_str())?;
+        utils::fix_file_context(tmp_file_path.as_str())?;
+        utils::fix_file_permissions(tmp_file_path.as_str())?;
+        utils::print_file_hexdump(tmp_file_path.as_str())?;
+        Ok(tmp_file_path)
     }
 
     fn add_sym(&mut self, module_name: &str, sym_name: &str) -> Result<usize, InjectionError> {
