@@ -34,9 +34,13 @@ pub struct Injector {
     sym_cache: HashMap<String, usize>,
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 enum InjectionType {
+    /// Use dlopen to inject a library
     RawDlopen,
+    /// Use memfd_create and dlopen to inject a library
     MemFdDlopen,
+    /// Inject raw shellcode
     RawShellcode,
 }
 
@@ -69,6 +73,12 @@ impl Injector {
     }
 
     fn prepare_file(&self) -> Result<String, InjectionError> {
+        if self.injection_type == InjectionType::RawDlopen
+            || self.injection_type == InjectionType::MemFdDlopen
+        {
+        utils::verify_elf_file(self.file_path.as_str())?;
+        }
+
         let tmp_file_path = utils::copy_file_to_tmp(self.file_path.as_str())?;
         utils::fix_file_context(tmp_file_path.as_str())?;
         utils::fix_file_permissions(tmp_file_path.as_str())?;

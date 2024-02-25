@@ -33,7 +33,31 @@ pub fn print_file_hexdump(file_path: &str) -> Result<(), InjectionError> {
     hexdump(&in_buffer, &mut out_buffer).unwrap();
 
     debug!("Hexdump of file: {}", String::from_utf8_lossy(&out_buffer));
+    Ok(())
+}
 
+pub fn verify_elf_file(file_path: &str) -> Result<(), InjectionError> {
+    let file = match std::fs::File::open(file_path) {
+        Ok(file) => file,
+        Err(e) => {
+            error!("Error opening file: {}", e);
+            return Err(InjectionError::FileError);
+        }
+    };
+
+    let mut magic = [0; 4];
+    match file.take(4).read_exact(&mut magic) {
+        Ok(_) => {}
+        Err(e) => {
+            error!("Error reading file: {}", e);
+            return Err(InjectionError::FileError);
+        }
+    }
+
+    if magic != [0x7f, 0x45, 0x4c, 0x46] {
+        error!("File is not an ELF file");
+        return Err(InjectionError::FileError);
+    }
 
     Ok(())
 }
