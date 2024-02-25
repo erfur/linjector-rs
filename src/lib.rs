@@ -8,7 +8,6 @@ use std::collections::HashMap;
 
 #[macro_use]
 extern crate log;
-extern crate android_logger;
 
 #[derive(Debug)]
 pub enum InjectionError {
@@ -77,7 +76,7 @@ impl Injector {
         if self.injection_type == InjectionType::RawDlopen
             || self.injection_type == InjectionType::MemFdDlopen
         {
-        utils::verify_elf_file(self.file_path.as_str())?;
+            utils::verify_elf_file(self.file_path.as_str())?;
         }
 
         let tmp_file_path = utils::copy_file_to_tmp(self.file_path.as_str())?;

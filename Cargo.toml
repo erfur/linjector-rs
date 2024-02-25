@@ -24,3 +24,4 @@ log = "0.4.20"
 nix = { version = "0.27.1", features = ["uio"] }
 pretty-hex = "0.4.0"
 proc-maps = "0.3.2"
+simple_logger = "4.3.3"
