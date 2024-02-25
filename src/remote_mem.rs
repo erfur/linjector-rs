@@ -28,16 +28,32 @@ impl RemoteMem {
     }
 
     pub fn read_vec(&self, addr: usize, buf: &mut Vec<u8>) -> Result<(), InjectionError> {
-        pread(&self.fd, buf, addr as i64).map_err(|_| InjectionError::RemoteMemoryError)?;
+        debug!(
+            "reading from remote memory: addr: 0x{:x}, len: {}",
+            addr,
+            buf.len()
+        );
+        match pread(&self.fd, buf, addr as i64) {
+            Ok(_) => {}
+            Err(e) => {
+                error!("error while reading from remote memory: {:?}", e);
+                return Err(InjectionError::RemoteMemoryError);
+            }
+        }
         Ok(())
     }
 
     pub fn write(&self, addr: usize, buf: &Vec<u8>) -> Result<(), InjectionError> {
+        debug!(
+            "writing into remote memory: addr: 0x{:x}, len: {}",
+            addr,
+            buf.len()
+        );
         match pwrite(&self.fd, &buf, addr as i64) {
             Ok(_) => Ok(()),
             Err(e) => {
                 error!("error while writing into remote memory: {:?}", e);
-                return Err(InjectionError::RemoteMemoryError);
+                Err(InjectionError::RemoteMemoryError)
             }
         }
     }

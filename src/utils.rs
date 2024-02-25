@@ -32,7 +32,8 @@ pub fn print_file_hexdump(file_path: &str) -> Result<(), InjectionError> {
 
     hexdump(&in_buffer, &mut out_buffer).unwrap();
 
-    info!("Hexdump of file: {}", String::from_utf8_lossy(&out_buffer));
+    debug!("Hexdump of file: {}", String::from_utf8_lossy(&out_buffer));
+
 
     Ok(())
 }

@@ -42,6 +42,7 @@ enum InjectionType {
 
 impl Injector {
     pub fn new(pid: i32) -> Result<Injector, InjectionError> {
+        info!("new injector for pid: {}", pid);
         Ok(Injector {
             pid,
             remote_proc: remote_proc::RemoteProc::new(pid)?,
