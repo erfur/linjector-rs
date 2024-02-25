@@ -1,9 +1,10 @@
-use std::collections::HashMap;
 mod remote_mem;
 mod remote_module;
 mod remote_proc;
 mod shellcode;
 mod utils;
+
+use std::collections::HashMap;
 
 #[macro_use]
 extern crate log;
