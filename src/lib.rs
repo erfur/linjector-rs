@@ -117,6 +117,7 @@ impl Injector {
     ) -> Result<&mut Self, InjectionError> {
         let sym_addr = self.add_sym(module_name, sym_name)?;
         self.target_func_sym_name = sym_name.to_string();
+        self.target_func_sym_addr = sym_addr;
         debug!("set_func_sym: {} 0x{:x}", sym_name, sym_addr);
         Ok(self)
     }
@@ -128,6 +129,7 @@ impl Injector {
     ) -> Result<&mut Self, InjectionError> {
         let sym_addr = self.add_sym(module_name, sym_name)?;
         self.target_var_sym_name = sym_name.to_string();
+        self.target_var_sym_addr = sym_addr;
         debug!("set_var_sym: {} 0x{:x}", sym_name, sym_addr);
         Ok(self)
     }
