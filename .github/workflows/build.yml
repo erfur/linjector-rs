@@ -35,8 +35,8 @@ jobs:
       - name: build
         run: cargo ndk --target aarch64-linux-android build --release
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+      #   - name: Setup tmate session
+      #     uses: mxschmitt/action-tmate@v3
 
       - name: move files
         run: |
