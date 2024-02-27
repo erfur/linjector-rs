@@ -281,6 +281,7 @@ pub(crate) fn self_jmp() -> Result<Vec<u8>, InjectionError> {
     let mut ops = dynasmrt::aarch64::Assembler::new().unwrap();
 
     dynasm!(ops
+        ; .arch aarch64
         ; ->self_jmp:
         ; b ->self_jmp
     );
