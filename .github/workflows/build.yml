@@ -20,28 +20,35 @@ permissions:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  modify_and_release_apk:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
+      - name: set up cargo-ndk
+        run: cargo install cargo-ndk
+
+      - name: set up aarch64 target
+        run: rustup target add aarch64-linux-android
+
+      - name: build
+        run: cargo ndk --target aarch64-linux-android build --release
+
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
 
-      - name: rename files
+      - name: move files
         run: |
-          mv obsidian.apk "${{ env.NEW_APK_NAME }}.apk"
-          mv ./obsidian/dist/obsidian.apk "./${{ env.NEW_APK_NAME }}-hooked-unsigned.apk"
-          mv "${{ steps.sign_app.outputs.signedReleaseFile }}" "${{ env.NEW_APK_NAME }}-hooked-signed.apk"
+          mv target/aarch64-linux-android/release/linjector-cmd ./linjector-cli
+          xz -9 -k ./linjector-cli
 
       - name: save hashes in env
         run: |
           echo '```' > hashes.txt
           echo "SHA256 hashes:" >> hashes.txt
-          sha256sum "${{ env.NEW_APK_NAME }}.apk" >> hashes.txt
-          sha256sum "${{ env.NEW_APK_NAME }}-hooked-unsigned.apk" >> hashes.txt
-          sha256sum "${{ env.NEW_APK_NAME }}-hooked-signed.apk" >> hashes.txt
+          sha256sum linjector-cli >> hashes.txt
+          sha256sum linjector-cli.xz >> hashes.txt
           echo '```' >> hashes.txt
 
       - name: release
@@ -50,6 +57,5 @@ jobs:
         with:
           body_path: hashes.txt
           files: |
-            ./${{ env.NEW_APK_NAME }}.apk
-            ./${{ env.NEW_APK_NAME }}-hooked-unsigned.apk
-            ./${{ env.NEW_APK_NAME }}-hooked-signed.apk
+            ./linjector-cli
+            ./linjector-cli.xz
