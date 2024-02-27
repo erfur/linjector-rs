@@ -33,7 +33,7 @@ struct Args {
     #[arg(short, long)]
     debug: bool,
 
-    /// print logs to logcat (TODO)
+    /// print logs to logcat
     #[arg(long)]
     logcat: bool,
 }
