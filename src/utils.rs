@@ -63,6 +63,12 @@ pub fn verify_elf_file(file_path: &str) -> Result<(), InjectionError> {
 }
 
 pub fn copy_file_to_tmp(file_path: &str) -> Result<String, InjectionError> {
+    // skip if the file is already in /dev/local/tmp
+    if file_path.starts_with(TMP_DIR_PATH) {
+        info!("File is already in {}", TMP_DIR_PATH);
+        return Ok(file_path.to_string());
+    }
+
     let file_name = match std::path::Path::new(file_path).file_name() {
         Some(name) => name.to_str().unwrap(),
         None => {
