@@ -7,7 +7,7 @@ Android port of [linux-injector](https://github.com/namazso/linux_injector). Lib
 ```
 Inject code into a running process using /proc/mem
 
-Usage: linjector-cmd [OPTIONS] --pid <PID> --file <FILE>
+Usage: linjector-cli [OPTIONS] --pid <PID> --file <FILE>
 
 Options:
   -p, --pid <PID>

@@ -1,6 +1,6 @@
 [package]
 name = "linjector-rs"
-version = "0.1.0"
+version = "0.1.1-dev"
 edition = "2021"
 
 [lib]
@@ -8,8 +8,8 @@ name = "linjector_rs"
 path = "src/lib.rs"
 
 [[bin]]
-name = "linjector-cmd"
-path = "bin/cmd.rs"
+name = "linjector-cli"
+path = "bin/cli.rs"
 
 [dependencies]
 android_logger = "0.13.3"

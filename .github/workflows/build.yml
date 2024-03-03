@@ -40,7 +40,7 @@ jobs:
 
       - name: move files
         run: |
-          mv target/aarch64-linux-android/release/linjector-cmd ./linjector-cli
+          mv target/aarch64-linux-android/release/linjector-cli ./linjector-cli
           xz -9 -k ./linjector-cli
 
       - name: save hashes in env
