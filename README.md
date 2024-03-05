@@ -1,6 +1,6 @@
 # linjector-rs
 
-Android port of [linux-injector](https://github.com/namazso/linux_injector). Library injection using /proc/mem, without ptrace. Only aarch64 is supported.
+Android port of [linux_injector](https://github.com/namazso/linux_injector). Library injection using /proc/mem, without ptrace. Only aarch64 is supported.
 
 ## Usage
 
