@@ -63,13 +63,24 @@ pub fn verify_elf_file(file_path: &str) -> Result<(), InjectionError> {
 }
 
 pub fn copy_file_to_tmp(file_path: &str) -> Result<String, InjectionError> {
+    // get absolute path
+    let file_path_absolute = match std::path::Path::new(file_path).canonicalize() {
+        Ok(path) => path,
+        Err(e) => {
+            error!("Error getting file path: {}", e);
+            return Err(InjectionError::FileError);
+        }
+    };
+
+    info!("File path: {}", file_path_absolute.to_str().unwrap());
+
     // skip if the file is already in /dev/local/tmp
-    if file_path.starts_with(TMP_DIR_PATH) {
+    if file_path_absolute.starts_with(TMP_DIR_PATH) {
         info!("File is already in {}", TMP_DIR_PATH);
-        return Ok(file_path.to_string());
+        return Ok(String::from(file_path_absolute.to_str().unwrap()));
     }
 
-    let file_name = match std::path::Path::new(file_path).file_name() {
+    let file_name = match file_path_absolute.file_name() {
         Some(name) => name.to_str().unwrap(),
         None => {
             error!("Error getting file name");
