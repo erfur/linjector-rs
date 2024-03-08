@@ -2,6 +2,8 @@
 
 Android port of [linux_injector](https://github.com/namazso/linux_injector). Library injection using /proc/mem, without ptrace. Only aarch64 is supported.
 
+To get an idea of how it works, you can read the [blog post](https://erfur.github.io/blog/dev/code-injection-without-ptrace).
+
 ## Usage
 
 ```
