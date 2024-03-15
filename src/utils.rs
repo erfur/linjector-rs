@@ -1,7 +1,13 @@
 use hxdmp::hexdump;
 use std::io::{ErrorKind, Read};
+use std::process::Output;
+use std::str::from_utf8;
 
 use crate::InjectionError;
+
+use glob::glob;
+use std::time::Duration;
+use std::thread;
 
 const HEXDUMP_BUFFER_SIZE: usize = 0x200;
 const TMP_DIR_PATH: &str = "/data/local/tmp";
@@ -162,3 +168,82 @@ pub fn fix_file_permissions(file_path: &str) -> Result<(), InjectionError> {
         }
     }
 }
+
+pub fn execute_command(program: &str, args: &Vec<&str>) -> Result<Output, InjectionError> {
+    match std::process::Command::new(program)
+        .args(args)
+        .output()
+    {
+        Ok(output) => {
+            if !output.status.success() {
+                error!(
+                    "Error running cmd {} {:?} err: {}", program, args, 
+                    String::from_utf8_lossy(&output.stderr)
+                );
+                Err(InjectionError::CommandError)
+            } else {
+                info!("Running cmd successfully: {} {:?}", program, args);
+                Ok(output)
+            }
+        }
+        Err(e) => {
+            error!("Error running cmd {} {:?} err: {}", program, args, e);
+            Err(InjectionError::CommandError)
+        }
+    }
+}
+
+pub fn get_pid_by_package(pkg_name: &str) -> std::io::Result<u32> {
+    for entry in glob("/proc/*/cmdline").unwrap() {
+        match entry {
+            Ok(path) => {
+                let mut file = std::fs::File::open(&path)?;
+                let mut contents = String::new();
+                file.read_to_string(&mut contents)?;
+                let tmp_name = contents.trim_end_matches('\0');
+                if tmp_name == pkg_name {
+                    let path_str = path.to_str().unwrap();
+                    let pid_str = path_str.split("/").nth(2).unwrap();
+                    let pid = pid_str.parse::<u32>().unwrap();
+                    return Ok(pid);
+                }
+            },
+            Err(err) => println!("{:?}", err),
+        }
+    }
+    Ok(0)
+}
+
+pub fn get_pid_by_package_with_polling(pkg_name: &str) -> u32{
+    let mut _pid: u32 = 0;
+
+    let count = 100;
+    for _i in 0..count {
+        _pid = get_pid_by_package(pkg_name).unwrap();
+        if _pid > 0 {
+            break;
+        }
+        thread::sleep(Duration::from_micros(500));
+    }
+
+    return _pid;
+}
+
+pub fn restart_app_and_get_pid(pkg_name: &str) -> u32 {
+    let _ = execute_command("am", &vec!["force-stop", "com.ss.android.ugc.aweme"]);
+    // check if this command can start the application
+    let _ = execute_command("monkey", &vec!["-p", pkg_name, "-c", "android.intent.category.LAUNCHER", "1"]);
+
+    let mut _pid = get_pid_by_package_with_polling(pkg_name);
+
+    if _pid <= 0 {
+        // try another way to start the application
+        let get_main_activity_result = execute_command("cmd", &vec!["package", "resolve-activity", "--brief", pkg_name, "|", "tail", "-n", "1"]).unwrap();
+        let result_str = from_utf8(&get_main_activity_result.stdout).unwrap();
+        let last_line = result_str.lines().last().unwrap();
+        let _ = execute_command("am", &vec!["start", last_line]);
+        _pid = get_pid_by_package_with_polling(pkg_name);
+    }
+    return _pid;
+}
+

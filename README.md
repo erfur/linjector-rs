@@ -14,7 +14,8 @@ Usage: linjector-cli [OPTIONS] --pid <PID> --file <FILE>
 Options:
   -p, --pid <PID>
           pid of the target process
-
+  -a, --app-package-name <APP_PACKAGE_NAME>
+          target application's package name, restart the application and do injection
   -f, --file <FILE>
           path of the library/shellcode to inject
 

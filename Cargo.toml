@@ -1,6 +1,6 @@
 [package]
 name = "linjector-rs"
-version = "0.1.1-dev"
+version = "0.1.2-dev"
 edition = "2021"
 
 [lib]
@@ -25,3 +25,13 @@ nix = { version = "0.27.1", features = ["uio"] }
 pretty-hex = "0.4.0"
 proc-maps = "0.3.2"
 simple_logger = "4.3.3"
+glob = "0.3.1"
+
+[profile.release]
+opt-level = "z"
+debug = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = "abort"
+strip = true
