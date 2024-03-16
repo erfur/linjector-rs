@@ -223,6 +223,7 @@ impl Injector {
         info!("wait for shellcode to trigger");
         let mut new_map: u64;
         loop {
+            std::thread::sleep(std::time::Duration::from_millis(10));
             let data = proc.mem.read(self.target_var_sym_addr, 0x8).unwrap();
             // u64 from val
             new_map = u64::from_le_bytes(data[0..8].try_into().unwrap());
