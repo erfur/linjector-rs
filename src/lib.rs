@@ -19,6 +19,7 @@ pub enum InjectionError {
     FileError,
     CommandError,
     ShellcodeError,
+    PidNotFound
 }
 
 pub struct Injector {
@@ -165,6 +166,15 @@ impl Injector {
     pub fn use_raw_shellcode(&mut self) -> Result<&mut Self, InjectionError> {
         self.injection_type = InjectionType::RawShellcode;
         Ok(self)
+    }
+
+    pub fn restart_app_and_get_pid(package_name: &str) -> Result<u32, InjectionError> {
+        let pid = utils::restart_app_and_get_pid(package_name);
+        if pid > 0 {
+            Ok(pid)
+        } else {
+            Err(InjectionError::PidNotFound)
+        }
     }
 
     pub fn inject(&mut self) -> Result<(), InjectionError> {

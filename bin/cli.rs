@@ -9,7 +9,11 @@ use simple_logger::SimpleLogger;
 struct Args {
     /// pid of the target process
     #[arg(short, long)]
-    pid: i32,
+    pid: Option<i32>,
+
+    /// target application's package name, restart the application and do injection
+    #[arg(short, long)]
+    app_package_name: Option<String>,
 
     /// path of the library/shellcode to inject
     #[arg(short, long)]
@@ -71,7 +75,22 @@ fn main() {
         }
     }
 
-    let mut injector = match linjector_rs::Injector::new(args.pid) {
+    let mut target_pid = args.pid.unwrap_or(0);
+    if target_pid <= 0 {
+        let Some(name) = args.app_package_name else {
+            error!("No pid or app_package_name is specified");
+            return;
+        };
+        let Ok(app_pid) = linjector_rs::Injector::restart_app_and_get_pid(&name) else {
+            error!("Can't restart package: {}, or cannot found pid", name);
+            return;
+        };
+        target_pid = app_pid as i32;
+    }
+
+    info!("target process pid: {}", target_pid);
+
+    let mut injector = match linjector_rs::Injector::new(target_pid) {
         Ok(injector) => injector,
         Err(e) => {
             error!("Error creating injector: {:?}", e);
