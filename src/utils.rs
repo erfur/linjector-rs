@@ -230,7 +230,7 @@ pub fn get_pid_by_package_with_polling(pkg_name: &str) -> u32{
 }
 
 pub fn restart_app_and_get_pid(pkg_name: &str) -> u32 {
-    let _ = execute_command("am", &vec!["force-stop", "com.ss.android.ugc.aweme"]);
+    let _ = execute_command("am", &vec!["force-stop", pkg_name]);
     // check if this command can start the application
     let _ = execute_command("monkey", &vec!["-p", pkg_name, "-c", "android.intent.category.LAUNCHER", "1"]);
 
