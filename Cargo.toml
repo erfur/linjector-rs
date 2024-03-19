@@ -1,6 +1,6 @@
 [package]
 name = "linjector-rs"
-version = "0.1.2-dev"
+version = "0.1.1-dev"
 edition = "2021"
 
 [lib]
