@@ -9,19 +9,21 @@ To get an idea of how it works, you can read the [blog post](https://erfur.githu
 ```
 Inject code into a running process using /proc/mem
 
-Usage: linjector-cli [OPTIONS] --pid <PID> --file <FILE>
+Usage: linjector-cli [OPTIONS] --file <FILE>
 
 Options:
   -p, --pid <PID>
           pid of the target process
+
   -a, --app-package-name <APP_PACKAGE_NAME>
           target application's package name, (re)start the application and do injection
+
   -f, --file <FILE>
           path of the library/shellcode to inject
 
   -i, --injection-type <INJECTION_TYPE>
           type of injection
-
+          
           [default: raw-dlopen]
 
           Possible values:
