@@ -1,28 +1,21 @@
-# This is a basic workflow to help you get started with Actions
-
 name: CI
 
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
     branches: ["main"]
     tags:
-      - "*"
+      - "v*"
   pull_request:
     branches: ["main"]
 
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 permissions:
   contents: write
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
@@ -35,27 +28,21 @@ jobs:
       - name: build
         run: cargo ndk --target aarch64-linux-android build --release
 
-      #   - name: Setup tmate session
-      #     uses: mxschmitt/action-tmate@v3
-
       - name: move files
         run: |
           mv target/aarch64-linux-android/release/linjector-cli ./linjector-cli
-          xz -9 -k ./linjector-cli
 
       - name: save hashes in env
         run: |
           echo '```' > hashes.txt
           echo "SHA256 hashes:" >> hashes.txt
           sha256sum linjector-cli >> hashes.txt
-          sha256sum linjector-cli.xz >> hashes.txt
           echo '```' >> hashes.txt
 
       - name: release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           body_path: hashes.txt
           files: |
             ./linjector-cli
-            ./linjector-cli.xz

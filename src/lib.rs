@@ -19,6 +19,7 @@ pub enum InjectionError {
     FileError,
     CommandError,
     ShellcodeError,
+    PidNotFound,
 }
 
 pub struct Injector {
@@ -167,6 +168,15 @@ impl Injector {
         Ok(self)
     }
 
+    pub fn restart_app_and_get_pid(package_name: &str) -> Result<u32, InjectionError> {
+        let pid = utils::restart_app_and_get_pid(package_name);
+        if pid > 0 {
+            Ok(pid)
+        } else {
+            Err(InjectionError::PidNotFound)
+        }
+    }
+
     pub fn inject(&mut self) -> Result<(), InjectionError> {
         let file_path = self.prepare_file()?;
         let proc = remote_proc::RemoteProc::new(self.pid)?;
@@ -177,29 +187,22 @@ impl Injector {
         }
 
         info!("build second stage shellcode");
-        let second_stage: Vec<u8>;
-        match self.injection_type {
-            InjectionType::RawDlopen => {
-                second_stage = shellcode::raw_dlopen_shellcode(
-                    *self.sym_cache.get("dlopen").unwrap(),
-                    file_path,
-                    *self.sym_cache.get("malloc").unwrap(),
-                )
-                .unwrap();
-            }
-            InjectionType::MemFdDlopen => {
-                second_stage = shellcode::memfd_dlopen_shellcode(
-                    *self.sym_cache.get("dlopen").unwrap(),
-                    *self.sym_cache.get("malloc").unwrap(),
-                    &std::fs::read(file_path.as_str()).unwrap(),
-                    *self.sym_cache.get("sprintf").unwrap(),
-                )
-                .unwrap();
-            }
-            InjectionType::RawShellcode => {
-                second_stage = shellcode::raw_shellcode().unwrap();
-            }
-        }
+        let second_stage = match self.injection_type {
+            InjectionType::RawDlopen => shellcode::raw_dlopen_shellcode(
+                *self.sym_cache.get("dlopen").unwrap(),
+                file_path,
+                *self.sym_cache.get("malloc").unwrap(),
+            )
+            .unwrap(),
+            InjectionType::MemFdDlopen => shellcode::memfd_dlopen_shellcode(
+                *self.sym_cache.get("dlopen").unwrap(),
+                *self.sym_cache.get("malloc").unwrap(),
+                &std::fs::read(file_path.as_str()).unwrap(),
+                *self.sym_cache.get("sprintf").unwrap(),
+            )
+            .unwrap(),
+            InjectionType::RawShellcode => shellcode::raw_shellcode().unwrap(),
+        };
 
         info!("build first stage shellcode");
         let first_stage =
@@ -223,6 +226,7 @@ impl Injector {
         info!("wait for shellcode to trigger");
         let mut new_map: u64;
         loop {
+            std::thread::sleep(std::time::Duration::from_millis(10));
             let data = proc.mem.read(self.target_var_sym_addr, 0x8).unwrap();
             // u64 from val
             new_map = u64::from_le_bytes(data[0..8].try_into().unwrap());
