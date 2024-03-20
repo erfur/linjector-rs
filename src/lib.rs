@@ -19,7 +19,7 @@ pub enum InjectionError {
     FileError,
     CommandError,
     ShellcodeError,
-    PidNotFound
+    PidNotFound,
 }
 
 pub struct Injector {
@@ -187,29 +187,22 @@ impl Injector {
         }
 
         info!("build second stage shellcode");
-        let second_stage: Vec<u8>;
-        match self.injection_type {
-            InjectionType::RawDlopen => {
-                second_stage = shellcode::raw_dlopen_shellcode(
-                    *self.sym_cache.get("dlopen").unwrap(),
-                    file_path,
-                    *self.sym_cache.get("malloc").unwrap(),
-                )
-                .unwrap();
-            }
-            InjectionType::MemFdDlopen => {
-                second_stage = shellcode::memfd_dlopen_shellcode(
-                    *self.sym_cache.get("dlopen").unwrap(),
-                    *self.sym_cache.get("malloc").unwrap(),
-                    &std::fs::read(file_path.as_str()).unwrap(),
-                    *self.sym_cache.get("sprintf").unwrap(),
-                )
-                .unwrap();
-            }
-            InjectionType::RawShellcode => {
-                second_stage = shellcode::raw_shellcode().unwrap();
-            }
-        }
+        let second_stage = match self.injection_type {
+            InjectionType::RawDlopen => shellcode::raw_dlopen_shellcode(
+                *self.sym_cache.get("dlopen").unwrap(),
+                file_path,
+                *self.sym_cache.get("malloc").unwrap(),
+            )
+            .unwrap(),
+            InjectionType::MemFdDlopen => shellcode::memfd_dlopen_shellcode(
+                *self.sym_cache.get("dlopen").unwrap(),
+                *self.sym_cache.get("malloc").unwrap(),
+                &std::fs::read(file_path.as_str()).unwrap(),
+                *self.sym_cache.get("sprintf").unwrap(),
+            )
+            .unwrap(),
+            InjectionType::RawShellcode => shellcode::raw_shellcode().unwrap(),
+        };
 
         info!("build first stage shellcode");
         let first_stage =

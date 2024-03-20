@@ -25,7 +25,7 @@ impl RemoteModule {
             .iter()
             .find(|sym| symbol_name == elf.strtab.get_at(sym.st_name).unwrap());
 
-        if !result.is_none() {
+        if result.is_some() {
             let offset = result.unwrap().st_value as usize;
             return Ok(offset + self.vm_addr);
         }

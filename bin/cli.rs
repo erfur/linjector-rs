@@ -11,7 +11,7 @@ struct Args {
     #[arg(short, long)]
     pid: Option<i32>,
 
-    /// target application's package name, restart the application and do injection
+    /// target application's package name, (re)start the application and do injection
     #[arg(short, long)]
     app_package_name: Option<String>,
 
@@ -61,18 +61,16 @@ fn main() {
         } else {
             android_logger::init_once(Config::default().with_max_level(LevelFilter::Info));
         }
+    } else if args.debug {
+        SimpleLogger::new()
+            .with_level(LevelFilter::Debug)
+            .init()
+            .unwrap();
     } else {
-        if args.debug {
-            SimpleLogger::new()
-                .with_level(LevelFilter::Debug)
-                .init()
-                .unwrap();
-        } else {
-            SimpleLogger::new()
-                .with_level(LevelFilter::Info)
-                .init()
-                .unwrap();
-        }
+        SimpleLogger::new()
+            .with_level(LevelFilter::Info)
+            .init()
+            .unwrap();
     }
 
     let mut target_pid = args.pid.unwrap_or(0);
